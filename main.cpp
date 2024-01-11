@@ -2,31 +2,34 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <memory>
 
 using namespace std;
 
-class Jucator {
-private:
+class Persoana {
+protected:
     string nume;
     int varsta;
+
+public:
+    Persoana(const string& nume, int varsta)
+            : nume(nume), varsta(varsta) {}
+
+    virtual ~Persoana() {}
+
+    virtual void afiseazaDetalii() const = 0;
+    virtual unique_ptr<Persoana> clone() const = 0;
+};
+
+class Jucator : public Persoana {
+private:
     string pozitie;
     int goluri;
     int paseDecisive;
 
 public:
     Jucator(const string& nume, int varsta, const string& pozitie)
-        : nume(nume), varsta(varsta), pozitie(pozitie), goluri(0), paseDecisive(0) {}
-
-    Jucator(const Jucator& other) = default;
-    Jucator& operator=(const Jucator& other) = default;
-    ~Jucator() {}
-
-    friend ostream& operator<<(ostream& os, const Jucator& jucator) {
-        os << "Nume: " << jucator.nume << ", Varsta: " << jucator.varsta
-           << ", Pozitie: " << jucator.pozitie
-           << ", Goluri: " << jucator.goluri << ", Pase Decisive: " << jucator.paseDecisive;
-        return os;
-    }
+            : Persoana(nume, varsta), pozitie(pozitie), goluri(0), paseDecisive(0) {}
 
     void marcheazaGol() {
         goluri++;
@@ -36,133 +39,106 @@ public:
         paseDecisive++;
     }
 
-
-};
-
-
-class Meci {
-private:
-    string adversar;
-    int goluriPentru;
-    int goluriImpotriva;
-
-public:
-    Meci(const string& adversar, int goluriPentru, int goluriImpotriva)
-        : adversar(adversar), goluriPentru(goluriPentru), goluriImpotriva(goluriImpotriva) {}
-
-    Meci(const Meci& other) = default;
-    Meci& operator=(const Meci& other) = default;
-    ~Meci() {}
-
-    friend ostream& operator<<(ostream& os, const Meci& meci) {
-        os << "Adversar: " << meci.adversar
-           << ", Goluri Pentru: " << meci.goluriPentru
-           << ", Goluri Impotriva: " << meci.goluriImpotriva;
-        return os;
+    void afiseazaDetalii() const override {
+        cout << "Jucator: " << nume << ", Varsta: " << varsta
+             << ", Pozitie: " << pozitie
+             << ", Goluri: " << goluri << ", Pase Decisive: " << paseDecisive << endl;
     }
 
-
+    unique_ptr<Persoana> clone() const override {
+        return make_unique<Jucator>(*this);
+    }
 };
 
-
-class Antrenor {
+class Antrenor : public Persoana {
 private:
-    string nume;
     int aniExperienta;
 
 public:
-    Antrenor(const string& nume, int aniExperienta)
-        : nume(nume), aniExperienta(aniExperienta) {}
+    Antrenor(const string& nume, int varsta, int aniExperienta)
+            : Persoana(nume, varsta), aniExperienta(aniExperienta) {}
 
-    Antrenor(const Antrenor& other) = default;
-    Antrenor& operator=(const Antrenor& other) = default;
-    ~Antrenor() {}
-
-    friend ostream& operator<<(ostream& os, const Antrenor& antrenor) {
-        os << "Nume: " << antrenor.nume
-           << ", Ani de Experienta: " << antrenor.aniExperienta;
-        return os;
-    }
-
-    void motiveazaJucatorii() {
+    void motiveazaJucatorii() const {
         cout << "Antrenorul motiveaza jucatorii." << endl;
     }
 
+    void afiseazaDetalii() const override {
+        cout << "Antrenor: " << nume << ", Varsta: " << varsta
+             << ", Ani de Experienta: " << aniExperienta << endl;
+    }
 
+    unique_ptr<Persoana> clone() const override {
+        return make_unique<Antrenor>(*this);
+    }
 };
 
+class Spectator : public Persoana {
+private:
+    string locatie;
+
+public:
+    Spectator(const string& nume, int varsta, const string& locatie)
+            : Persoana(nume, varsta), locatie(locatie) {}
+
+    void afiseazaDetalii() const override {
+        cout << "Spectator: " << nume << ", Varsta: " << varsta
+             << ", Locatie: " << locatie << endl;
+    }
+
+    unique_ptr<Persoana> clone() const override {
+        return make_unique<Spectator>(*this);
+    }
+};
 
 class EchipaFotbal {
 private:
     string numeEchipa;
-    Antrenor antrenor;
-    vector<Jucator> jucatori;
-    vector<Meci> meciuriProgramate;
+    unique_ptr<Persoana> liderEchipa;
+    vector<unique_ptr<Persoana>> membriEchipa;
 
 public:
-    EchipaFotbal(const string& numeEchipa, const Antrenor& antrenor)
-        : numeEchipa(numeEchipa), antrenor(antrenor) {}
+    EchipaFotbal(const string& numeEchipa, unique_ptr<Persoana> lider)
+            : numeEchipa(numeEchipa), liderEchipa(move(lider)) {}
 
-    EchipaFotbal(const EchipaFotbal& other) = default;
-    EchipaFotbal& operator=(const EchipaFotbal& other) = default;
-    ~EchipaFotbal() {}
-
-    void adaugaJucator(const Jucator& jucator) {
-        jucatori.push_back(jucator);
+    void adaugaMembriEchipa(unique_ptr<Persoana> membru) {
+        membriEchipa.push_back(move(membru));
     }
 
-    void programeazaMeci(const Meci& meci) {
-        meciuriProgramate.push_back(meci);
-    }
-
-    void afiseazaJucatori() const {
-        for (const Jucator& jucator : jucatori) {
-            cout << jucator << std::endl;
+    void afiseazaDetaliiEchipa() const {
+        cout << "Echipa de Fotbal: " << numeEchipa << endl;
+        cout << "Liderul Echipei:\n";
+        liderEchipa->afiseazaDetalii();
+        cout << "Membrii Echipei:\n";
+        for (const auto& membru : membriEchipa) {
+            membru->afiseazaDetalii();
         }
     }
-
-    void afiseazaMeciuri() const {
-        for (const Meci& meci : meciuriProgramate) {
-            std::cout << meci << std::endl;
-        }
-    }
-
-    void motiveazaJucatorii() {
-        antrenor.motiveazaJucatorii();
-    }
-
-
 };
 
 int main() {
-    Antrenor antrenor("Jose Mourinho", 20);
-    EchipaFotbal echipa("Real Madrid", antrenor);
+    // ...
 
-    Jucator jucator1("Cristiano Ronaldo", 38, "Atacant");
-    Jucator jucator2("Lionel Messi", 36, "Atacant");
-    Jucator jucator3("Neymar Jr.", 31, "Atacant");
+    // Adaugare clase derivate in clasa de baza EchipaFotbal
+    unique_ptr<Persoana> lider = make_unique<Antrenor>("Jose Mourinho", 50, 20);
+    EchipaFotbal echipa("Real Madrid", move(lider));
 
-    Meci meci1("Barcelona", 2, 1);
-    Meci meci2("Liverpool", 3, 0);
+    unique_ptr<Persoana> jucator1 = make_unique<Jucator>("Cristiano Ronaldo", 38, "Atacant");
+    unique_ptr<Persoana> jucator2 = make_unique<Jucator>("Lionel Messi", 36, "Atacant");
+    unique_ptr<Persoana> jucator3 = make_unique<Jucator>("Neymar Jr.", 31, "Atacant");
 
-    echipa.adaugaJucator(jucator1);
-    echipa.adaugaJucator(jucator2);
-    echipa.adaugaJucator(jucator3);
+    echipa.adaugaMembriEchipa(move(jucator1));
+    echipa.adaugaMembriEchipa(move(jucator2));
+    echipa.adaugaMembriEchipa(move(jucator3));
 
-    echipa.programeazaMeci(meci1);
-    echipa.programeazaMeci(meci2);
+    unique_ptr<Persoana> spectator1 = make_unique<Spectator>("Fan1", 25, "Tribuna A");
+    unique_ptr<Persoana> spectator2 = make_unique<Spectator>("Fan2", 30, "Tribuna B");
 
-    cout << "Echipa de Fotbal: " << endl;
-    cout << "Jucatori:\n";
-    echipa.afiseazaJucatori();
-    cout << "Meciuri:\n";
-    echipa.afiseazaMeciuri();
+    echipa.adaugaMembriEchipa(move(spectator1));
+    echipa.adaugaMembriEchipa(move(spectator2));
 
+    echipa.afiseazaDetaliiEchipa();
 
-   ifstream inputFile("tastatura.txt");
-    if (inputFile.is_open()) {
-
-    }
+    // ...
 
     return 0;
 }

@@ -1,0 +1,36 @@
+#include "Jucator.h"
+
+Jucator::Jucator(const std::string& nume, int varsta, const std::string& pozitie)
+    : nume(nume), varsta(varsta), pozitie(pozitie), goluri(0), paseDecisive(0) {}
+
+Jucator::Jucator(const Jucator& other)
+    : nume(other.nume), varsta(other.varsta), pozitie(other.pozitie),
+      goluri(other.goluri), paseDecisive(other.paseDecisive) {}
+
+Jucator& Jucator::operator=(const Jucator& other) {
+    if (this != &other) {
+        nume = other.nume;
+        varsta = other.varsta;
+        pozitie = other.pozitie;
+        goluri = other.goluri;
+        paseDecisive = other.paseDecisive;
+    }
+    return *this;
+}
+
+Jucator::~Jucator() {}
+
+std::ostream& operator<<(std::ostream& os, const Jucator& jucator) {
+    os << "Nume: " << jucator.nume << ", Varsta: " << jucator.varsta
+       << ", Pozitie: " << jucator.pozitie
+       << ", Goluri: " << jucator.goluri << ", Pase Decisive: " << jucator.paseDecisive;
+    return os;
+}
+
+void Jucator::marcheazaGol() {
+    goluri++;
+}
+
+void Jucator::oferaPasaDecisiva() {
+    paseDecisive++;
+}
